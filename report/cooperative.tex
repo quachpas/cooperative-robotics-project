@@ -1,0 +1,84 @@
+\documentclass[answers]{exam}
+\usepackage[left=3cm,right=3cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{makeidx}         % allows index generation
+\usepackage{graphicx,color}          % standard LaTeX graphics tool
+\DeclareGraphicsRule{.pdftex}{pdf}{.pdftex}{}
+\DeclareGraphicsExtensions{.pdf, .png, .jpg}
+\graphicspath{{./figures/}}
+% when including figure files
+\usepackage{multicol}        % used for the two-column index
+\usepackage[bottom]{footmisc}% places footnotes at page bottom
+\usepackage{import}
+\usepackage{booktabs}
+\usepackage{arydshln}
+\setlength\dashlinedash{0.5pt}
+\setlength\dashlinegap{1.5pt}
+\setlength\arrayrulewidth{0.3pt}
+\usepackage{hyperref}
+\usepackage{authblk}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{pifont}
+\usepackage{subcaption}
+\usepackage{cancel}
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{fontspec}
+\usepackage{tikz}
+\usetikzlibrary{angles,quotes}
+
+\setmainfont{STIXTwoText}
+[
+Path = /usr/share/fonts/OTF/,
+Extension = .otf,
+UprightFont = *-Regular,
+BoldFont = *-Bold,
+ItalicFont = *-Italic,
+BoldItalicFont = *-BoldItalic,
+]
+\setmainfont{STIXTwoMath-Regular}
+[
+Path = /usr/share/fonts/OTF/,
+Extension = .otf,
+]
+%\setmainfont{XITS}
+%[
+%Path = /usr/share/fonts/OTF/,
+%Extension = .otf,
+%UprightFont = *-Regular,
+%BoldFont = *-Bold,
+%ItalicFont = *-Italic,
+%BoldItalicFont = *-BoldItalic,
+%]
+%\setmainfont{XITSMath-Regular}
+%[
+%Path = /usr/share/fonts/OTF/,
+%Extension = .otf,
+%BoldFont = XITSMath-Bold,
+%]
+\subimport{./files}{commands}
+\pagenumbering{arabic}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\subimport{./files}{titlepage}
+\newpage
+%\subimport{./}{general_notes}
+%\newpage
+\subimport{./files}{exercise_1}
+\newpage
+\subimport{./files}{exercise_2}
+\newpage
+\subimport{./files}{exercise_3}
+\newpage
+\subimport{./files}{exercise_4}
+\newpage
+\subimport{./files}{exercise_5}
+\newpage
+\subimport{./files}{exercise_6}
+
+\end{document}
+
+

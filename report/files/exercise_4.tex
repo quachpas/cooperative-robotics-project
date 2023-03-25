@@ -1,0 +1,143 @@
+	\section{Exercise 4: Implementing a Fixed-base Manipulation Action}
+	\subsection{Adding non-reactive tasks}
+	\question
+	To manipulate as a fixed based manipulator, we need to constraint the vehicle to
+	not move, otherwise the tool frame position task will make the vehicle move.
+
+	Goal: Add a constraint task that fixes the vehicle velocity to zero. Land on the
+	seafloor. Try reaching the rock position with the end-effector, and observe that
+	the vehicle does not move.
+
+	\begin{parts}
+		\part{Report the hierarchy of tasks used and their priorities in
+		each action. At which priority level did you add the constraint task?}
+
+		\begin{solutionorbox}
+			The hierarchy of tasks used is described in
+			Table~\ref{table:tkip_swn_improved_landing_manipulation_robust}.
+
+			The vehicle null velocity task is added as the
+			top-priority task for the Manipulation action, in order
+			for subsequent tasks to account for the constraint.
+		\end{solutionorbox}
+
+		\begin{table}[htb] 
+			\caption{Hierarchy of tasks for Safe Waypoint Navigation
+			\& Improved Landing \& Manipulation - ROBUST}
+			\label{table:tkip_swn_improved_landing_manipulation_robust}
+			\begin{center}
+				\footnotesize
+				\begin{tabular}{ccccc}
+					\toprule Task & Type &
+					Safe Waypoint Navigation & Improved
+					Landing & Manipulation\\
+					\midrule Minimum altitude & I & 1 & &\\
+					\hdashline Horizontal attitude & I & 2 & 1& \\
+					\hdashline Alignement to Target & I & & 2&\\
+					\hdashline Vehicle null velocity & E & & & 1\\
+					\hdashline Vehicle position & I & 3 & &\\
+					\hdashline Altitude & E &  & 3& \\
+					\hdashline End-effector position & I & & & 2\\
+					\bottomrule
+				\end{tabular}%
+			\end{center}%
+		\end{table}%
+
+		\part{What is the jacobian relationship for the vehicle null
+		velocity task? How was the task reference computed?}
+
+		\begin{solutionorbox}
+			We consider simply the Jacobian $\J[v]_{\vnv}$ as
+			\[
+				\J[v]_{\vnv} = \begin{bmatrix}
+					\Znm67\quad
+					\Inm66
+				\end{bmatrix}
+				\mathrm{,}
+			\]
+			which corresponds to the end-effector joints (zeros
+			block) and vehicles velocities (ones block).
+
+			The task reference corresponds to the objective vehicle
+			velocities, that is
+			\[
+				\xdotbar[v]\vnv = \begin{bmatrix}
+					\Znm61
+				\end{bmatrix}
+				\mathrm{.}
+			\]
+		\end{solutionorbox}
+
+	\end{parts}
+
+	\subsection{Adding a joint limit task}
+	\question
+	Let us now constrain the arm with the actual joint limits. The vector variables
+	\vect{uvms.jlmin} and \vect{uvms.jlmax} contain the maximum and minimum
+	values respectively.
+
+	Goal: Add a joint limits avoidance task. Land on the seafloor. Try reaching the
+	rock position with the end-effector, and observe that the vehicle does not move
+	and that all the joints are within their limits.
+	\begin{parts}
+		\part{Report the hierarchy of tasks used and their priorities in
+		each action. At which priority level did you add the joint limits task?}
+
+		\begin{solutionorbox}
+			The hierarchy of tasks used is described in
+			Table~\ref{table:tkip_swn_improved_landing_manipulation_v2_robust}
+			The Joint limits safety task is added below
+			the vehicle null velocity constraint task, and before
+			the end-effector position action-defining task.
+		\end{solutionorbox}
+		\begin{table}[htb] 
+			\caption{Hierarchy of tasks for Safe Waypoint Navigation
+				\& Improved Landing \& Manipulation v2 - ROBUST}
+			\label{table:tkip_swn_improved_landing_manipulation_v2_robust}
+			\begin{center}
+				\footnotesize
+				\begin{tabular}{ccccc}
+					\toprule Task & Type &
+					Safe Waypoint Navigation & Improved
+					Landing & Manipulation v2\\
+					\midrule Vehicle null velocity & E & & & 1\\
+					\hdashline Minimum altitude & I & 1 & &\\
+					\hdashline Horizontal attitude & I & 2 & 1& \\
+					\hdashline Joint limits & I & & & 2\\
+					\hdashline Alignement to Target & I & & 2&\\
+					\hdashline Vehicle position & I & 3 & &\\
+					\hdashline Altitude & E &  & 3& \\
+					\hdashline End-effector position & E & & & 3\\
+					\bottomrule
+				\end{tabular}%
+			\end{center}%
+		\end{table}%
+		\part{What is the Jacobian relationship for the Joint Limits task?
+		How was the task reference computed?}
+
+		\begin{solutionorbox}
+			We consider simply the Jacobian $\J_{\jl}$ as
+			\[
+				\J_{\jl} = \begin{bmatrix}
+					\Inm77\quad
+					\Znm66
+				\end{bmatrix}
+				\mathrm{.}
+			\]
+
+			We want the desired task reference to be a value away
+			from the limits \vect{uvms.jlmin} and \vect{uvms.jlmax}.
+			We choose $\xdotbar\jl$ to reach for the mean value,
+			a \emph{center} position,
+			\[
+				\xdotbar\jl =
+				\lambda\left(\frac{\vec{uvms.jlmin} +
+					\vec{uvms.jlmax}}2 -
+					\vec{q}
+				\right)\quad
+				\lambda\in\mathbb{R}^+
+				\mathrm{,}
+			\]
+			where \vect{q} are the current joint values.
+		\end{solutionorbox}
+	\end{parts}

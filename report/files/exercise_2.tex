@@ -1,0 +1,180 @@
+	\section{Exercise 2: Implement a Basic “Landing” Action.}
+	\subsection{Adding an
+	altitude control objective}
+	\question
+	Initialize the vehicle at the position:
+
+	\begin{displaymath}
+		\vec{p}
+		=
+		\begin{bmatrix}
+			10.5 & 37.5 & -38 & 0 & -0.06 & 0.5
+		\end{bmatrix}\T
+	\end{displaymath}
+
+	Goal: add a control task to regulate the altitude to zero.
+	\begin{parts}
+		\part{Report the hierarchy of task used and their priorities to
+			implement the Landing Action. Comment how you choose the priority level for the
+		altitude control task.}
+
+		\begin{solutionorbox}
+			The hierarchy of tasks for the Landing is described in
+			Table~\ref{table:tkip_landing_robust}, where the horizontal
+			attitude task has the highest priority.
+
+			Given the vehicle, the landing is safer to perform if
+			the vehicle is horizontal to the seafloor, when it is
+			assumed to be relatively flat. The horizontal attitude
+			is a prerequisite for the landing action.
+		\end{solutionorbox}
+		\begin{table}[htb]
+			\caption{Hierarchy of tasks for Landing - ROBUST}
+			\label{table:tkip_landing_robust}
+			\begin{center}
+				\footnotesize
+				\begin{tabular}{ccccc}
+					\toprule
+					Task & Type & Landing
+					\\
+					\midrule
+					Horizontal attitude & I & 1 \\
+					\hdashline
+					Altitude & E & 2 \\
+					\bottomrule
+				\end{tabular}
+			\end{center}
+		\end{table}%
+
+		\part{What is the Jacobian relationship for the Altitude control
+		task? How was the task reference computed?}
+
+		\begin{solutionorbox}
+			The Jacobian relationship for the altitude control task is
+			identical to the minimum altitude task.
+			\[
+				\J[v]_{\alt} = \begin{bmatrix}
+					\Znm17\quad
+					\vec[v]n\T\quad
+					\Znm13
+				\end{bmatrix}\mathrm{.}
+			\]
+
+			The task reference is equally similar to the minimum
+			altitude task, except the objective altitude is in this
+			instance $0$.
+			\[
+				\xdotbar[v]{\alt} = \lambda(0 - \vec{a})
+				\quad \lambda\in\mathbb{R}^+
+				\mathrm{.}
+			\]
+
+		\end{solutionorbox}
+
+		\part{How does this task differs from a minimum altitude control
+		task?}
+
+		\begin{solutionorbox}
+			This task differs from the minimum altitude control task
+			in two points:
+			\begin{itemize}
+				\item The objective altitude is $0$;
+				\item The altitude task has a lower priority
+					than the horizontal attitude task.
+			\end{itemize}
+
+		\end{solutionorbox}
+	\end{parts}
+
+	\subsection{Adding mission phases and change of action}
+	\question
+
+	Initialize the vehicle at the position:
+
+	\begin{displaymath}
+		\vec{p}
+		=
+		\begin{bmatrix}
+			8.5 & 38.5 & -36 & 0 & -0.06 & 0.5
+		\end{bmatrix}\T
+	\end{displaymath}
+
+	Use a "safe waypoint navigation action" to reach the following
+	position:
+
+	\begin{displaymath}
+		\vec{vehicleGoalPosition}
+		=
+		\begin{bmatrix}
+			10.5 & 37.5 & -38 & 0 & -0.06 & 0.5
+		\end{bmatrix}\T
+	\end{displaymath}
+
+	When the position has been reached, land on the seafloor using the basic
+	"landing" action.
+	\begin{parts}
+		\part{Report the unified hierarchy of tasks used and their
+		priorities.}
+
+		\begin{solutionorbox}
+			The unified hierarchy of tasks is illustrated in
+			Table~\ref{table:tkip_swn_landing_robust}. The Table is read
+			left to right, where the Safe Waypoint Navigation is the
+			first action, and the Landing the second action.
+		\end{solutionorbox}
+
+		\begin{table}[htb]
+			\caption{Hierarchy of tasks for Safe Waypoint Navigation
+			\& Landing - ROBUST}
+			\label{table:tkip_swn_landing_robust}
+			\begin{center}
+				\footnotesize
+				\begin{tabular}{ccccc}
+					\toprule
+					Task & Type & Safe Waypoint Navigation & Landing
+					\\
+					\midrule
+					Minimum altitude & I & 1 & \\
+					\hdashline
+					Horizontal attitude & I & 2 & 1\\
+					\hdashline
+					Vehicle position & I & 3 & \\
+					\hdashline
+					Altitude & E &  & 2\\
+					\bottomrule
+				\end{tabular}
+			\end{center}
+		\end{table}%
+		\part{How did you implement the transition from one action to the
+		other?}
+
+		\begin{solutionorbox}
+			In order to transition from one action to another, a
+			trigger condition must be met, which can simply be
+			considered as the completion of the current action's
+			objective. In practice, we compute an error metric
+			of the current parameters against the objective
+			parameters and check during the simulation main loop
+			whether the error is insignificant enough to consider
+			the current action as completed.
+
+			In order to smoothly activate (or deactivate) tasks
+			between different actions, we sequence all tasks using a
+			new activation function $\app$, such that the modified
+			activation function is defined as \[
+				a(\vec x, \vec p) = a^i(\vec x) \app
+				\mathrm{,}
+			\] where $\vec p$ is a vector of variables external to
+			the control variables $\vec x$, conveniently
+			parameterized by the time elapsed in the current action
+			in order to achieve a smooth transition, e.g. a
+			continuous increasing/decreasing function between
+			$0$ and $1$.
+
+			Once the trigger condition is met for the current
+			action, the sequencing activation functions $\app$ are
+			enabled for the transition to the next action, which
+			starts the smooth transition to the new task priorities.
+
+		\end{solutionorbox}
+	\end{parts}

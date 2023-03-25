@@ -1,0 +1,277 @@
+	\section{Exercise 3: Improve the “Landing” Action}
+
+	\subsection{Adding an alignment to target control objective}
+	\question
+	If we use the landing action, there is no guarantee that we land in from of the
+	nodule/rock. We need to add additional constraints to make the vehicle face the
+	nodule. The position of the rock is contained in the variable
+	\vect{rock\_center}.
+
+	Initialize the vehicle at the position:
+
+	\begin{displaymath}
+		\vec{p}
+		=
+		\begin{bmatrix}
+			8.5 & 38.5 & -36 & 0 & -0.06 & 0.5
+		\end{bmatrix}^\top
+	\end{displaymath}
+
+	Use a "safe waypoint navigation action" to reach the following position:
+
+	\begin{displaymath}
+		\vec{vehicleGoalPosition}
+		=
+		\begin{bmatrix}
+			10.5 & 37.5 & -38 & 0 & -0.06 & 0.5
+		\end{bmatrix}^\top
+	\end{displaymath}
+
+	Then land, aligning to the nodule.
+
+	Goal: Add an alignment task between the longitudinal axis of the vehicle ($x$
+	axis) and the nodule target. In particular, the $x$ axis of the vehicle should
+	align to the projection, on the inertial horizontal plane, of the unit vector
+	joining the vehicle frame \cframe v to the nodule frame \cframe t.
+	\begin{parts}
+		\part{Report the hierarchy of tasks used and their priorities in
+		each action. Comment the behaviour.}
+
+		\begin{solutionorbox}
+			The hierarchy of tasks used is described in
+			Table~\ref{table:tkip_swn_improved_landing_robust}.
+			
+			The Alignement to Target task is also a prerequisite for the
+			landing task, along with the horizontal attitude.
+			However, its priority is lower than the Horizontal
+			attitude task as the vehicle's attitude is a matter of
+			safety.
+
+			During the Landing phase, the vehicle first aligns
+			itself in terms of position, then in orientation. When
+			orienting itself, the descent begins at the same time.
+			This behaviour matches the task priorities, as linear
+			velocities are first generated for the Alignment to
+			Target, then for the Altitude.
+		\end{solutionorbox}
+		\begin{table}[htb]
+			\caption{Hierarchy of tasks for Safe Waypoint Navigation
+			\& Improved Landing}
+			\label{table:tkip_swn_improved_landing_robust}
+			\begin{center}
+				\footnotesize
+				\begin{tabular}{ccccc}
+					\toprule
+					Task & Type & Safe Waypoint Navigation &
+					Improved Landing
+					\\
+					\midrule
+					Minimum altitude & I & 1 & \\
+					\hdashline
+					Horizontal attitude & I & 2 & 1\\
+					\hdashline
+					Alignement to Target & I & & 2\\
+					\hdashline
+					Vehicle position & I & 3 & \\
+					\hdashline
+					Altitude & E &  & 3\\
+					\bottomrule
+				\end{tabular}
+			\end{center}
+		\end{table}%
+
+
+		\part{What is the Jacobian relationship for the Alignment to
+		Target control task? How was the task reference computed?}
+
+		\begin{solutionorbox}
+
+			Let $\vec{O_v}$ and $\vec{O_t}$ be the respective origins of the
+			vehicle frame \cframe v and target frame \cframe t.
+			Let $\vec{i_v}$ be the unit vector of the $x$-axis of
+			the vehicle, and $\theta$ the positive angle between
+			\vect[w]{i_v} and the projected distance vector
+			$\vec[w]{d}=\vec[w]{O_t} - \vec[w]{O_v}$ on the inertial
+			horizontal plane. Figure \ref{fig:ex3_ta} illustrates
+			this task.
+
+			In order to align the vehicle to the target, we define
+			the misalignement vector $\vec[w]{\rho}=\theta
+			\vec[w]{n_{at}}$, where $\vec[w]{n_{at}}$ is a vector
+			along the axis of rotation such that
+			$\vec[w]{n_{\at}}=\frac{1}{\sin\theta}\vec[w]{i_v}
+			\wedge\left(\frac{\vec[w]{d}}{\lVert\vec[w] d \rVert
+			}\right)$.
+
+			In order to align the vehicle, we define our task with
+			the objective of minimising $\vec\rho$ using its
+			derivative w.r.t. $\theta$. The partial derivative is
+
+			\[
+				\frac{\partial \vec[w]\rho}{\partial\theta} =
+				\vec[w]{n_{\at}}  \dot{\theta}
+				\mathrm{.}
+			\]
+
+			Let us express the above expression in terms of $\ydot$.
+			First, for $\dot{\theta}$
+			\[
+				\begin{aligned}
+					\dot{\theta} &= \vec[w]{n_{at}}
+					\vec\omega_{t/x}\\
+						     &= \vec[w]{n_{at}}  \left(
+							     \vec\omega_{t/w}
+							     -
+						     \vec\omega_{x/w}\right)
+				\end{aligned}
+				\mathrm{.}
+			\]
+
+			$\vec[w]{i_v}$ is a unit vector of the $x$-axis of the vehicle
+			frame \cframe v, thus we can write $\vec\omega_{v/w}=\vec\omega_{x/w}$.
+
+			Next, for $\vec\omega_{t/w}$
+			\[
+				\begin{aligned}
+					\vec\omega_{t/w} &=
+					\frac1{\lVert\vec[w] d\rVert^2}\left(\vec[w] d
+					\wedge \vec v_{d/w}\right)\\
+							 &=
+							 -\frac1{\lVert\vec[w] d\rVert^2}\left(\vec[w] d
+								 \wedge \vec
+							 v_{v/w}\right)
+				\end{aligned}
+				\mathrm{,}
+			\]
+			where $\vec v_{d/w}=\vec v_{t/w} - \vec v_{v/w}$ by
+			definition. We assume the target is immobile, thus $\vec
+			v_{t/w}=0$.
+
+			Finally, the Jacobian relationship is
+			\[
+				\dot{\theta} = \vec[w]{n_{at}}\T
+				\begin{bmatrix}
+					\Znm37\quad
+					-\frac1{\lVert\vec[w]
+					d\rVert^2}\skewmat[w]
+					d\quad
+					-\Inm33
+				\end{bmatrix}
+				\ydot
+				= \J[w]_{\at}\ydot
+				\mathrm{.}
+			\]
+		\end{solutionorbox}
+
+		\begin{figure}[h]
+			\begin{center}
+				\begin{tikzpicture}
+					\coordinate (Ov) at (0,0);
+					\coordinate (Ot) at (2,2);
+					\coordinate (x) at (0,1);
+
+					\filldraw (Ov) circle (2pt) node[left,
+						blue] {$O_v$};
+					\filldraw[red] (Ot) circle (2pt)
+						node[above] {$O_t$};
+
+
+					\draw[->] (Ov)--(x) node[above]{$x$};
+					\draw[->] (Ov)--(Ot) node[midway, below]{$d$};
+					\pic [draw, ->, "$\theta$", angle eccentricity=1.5] {angle=Ot--Ov--x};
+			\end{tikzpicture}
+		\end{center}
+
+		\caption{Target alignement on the inertial horizontal
+		plane}
+		\label{fig:ex3_ta}
+	\end{figure}
+
+	\begin{solutionorbox}
+		We compute the misalignement vector \vect{\rho} using the
+		Reduced Versor Lemma. The task reference is computed w.r.t.
+		$\vec[w]{\rho_{at}}$, as when the vectors are aligned,
+		$\lVert\vec[w]{\rho_{at}}\rVert$ tends toward $0$. We have
+		\[
+			\xdotbar[w]\at =
+			\lambda\left(0 - \lVert\vec[w]{\rho_{at}}\rVert\right) \quad
+			\lambda\in\mathbb{R}^+
+			\mathrm{.}
+		\]
+	\end{solutionorbox}
+
+	\part{Try changing the gain of the alignment task. Try at least
+		three different values, where one is very small. What is the observed
+		behaviour? Could you devise a solution that is gain-independent guaranteeing
+	that the landing is accomplished aligned to the target?}
+
+	\begin{solutionorbox}
+		The smaller the gain, the slower the vehicle orients itself to
+		the target. However, regardless of the gain, the vehicles
+		changes its position in order to align to the target, albeit
+		slower the smaller the gain. For a very small gain, the vehicle
+		does not seem to orient itself at all.
+
+		In order to have a gain-independent behaviour, we can add a bias term
+		to the task reference.
+		\[
+			\xdotbar[w]\at =
+			\lambda\left(0 - \lVert\vec[w]{\rho_{at}}\rVert\right) -
+			\mu\quad
+			\lambda,\mu\in\mathbb{R}^+
+			\mathrm{.}
+		\]
+	\end{solutionorbox}
+
+	\part{After the landing is accomplished, what happens if you try
+		to move the end-effector? Is the distance to the nodule sufficient to reach it
+		with the end-effector? Comment the observed behaviour. If, after landing, the
+		nodule is not in the manipulator's workspace, what was missing in the previous
+	actions? How would you fix it?}
+
+	\begin{solutionorbox}
+		After landing, the end-effector moves towards the target,
+		however the distance to the nodule is insufficient to reach it
+		with the end-effector. The end-effector stays elongated, but
+		does not touch the nodule.
+
+		If after landing, the target is not within the manipulator's
+		workspace, the TKIP is missing a task involving the distance to
+		the target.
+
+		To fix the Landing action, we would add a new inequality task
+		called Distance to Target, which makes use of the distance
+		vector \vect[w]{d} to reach the objective distance value. The
+		new hierarchy of tasks is described in
+		Table~\ref{table:tkip_swn_improved_landing_v2_robust}, where the
+		Distance to Target task priority is below both Alignement to
+		Target and Horizontal attitude.
+	\end{solutionorbox}
+	\begin{table}[htb]
+		\caption{Hierarchy of tasks for Safe Waypoint Navigation \&
+		Improved Landing v2 - ROBUST}
+		\label{table:tkip_swn_improved_landing_v2_robust}
+		\begin{center}
+			\footnotesize
+			\begin{tabular}{ccccc}
+				\toprule
+				Task & Type & Safe Waypoint Navigation &
+				Improved Landing v2
+				\\
+				\midrule
+				Minimum altitude & I & 1 & \\
+				\hdashline
+				Horizontal attitude & I & 2 & 1\\
+				\hdashline
+				Alignement to Target & I & & 2\\
+				\hdashline
+				Distance to Target & I & & 3\\
+				\hdashline
+				Vehicle position & I & 3 & \\
+				\hdashline
+				Altitude & E &  & 4\\
+				\bottomrule
+			\end{tabular}
+		\end{center}
+	\end{table}%
+\end{parts}

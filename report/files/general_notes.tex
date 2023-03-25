@@ -1,0 +1,46 @@
+\section{General notes} 
+\begin{itemize}
+	\item Exercises 1-4 are done with the ROBUST matlab main and unity visualization
+		tools. Exercises 5-6 are done with the DexROV matlab main and unity
+		visualization tools.
+	\item Comment and discuss the simulations, in a concise scientific manner. Further
+		comments, other than the questions, can be added, although there is no need to
+		write 10 pages for each exercise.
+	\item Aid the discussion with screenshots of the simulated environment (compress
+		them to maintain a small overall file size), and graphs of the relevant
+		variables (i.e. activation functions of inequality tasks, task variables, and so
+		on). Graphs should always report the units of measure in both axes, and legends
+		whenever relevant.
+	\item Report the thresholds whenever relevant.  Report the mathematical formula
+		employed to derive the task jacobians and the control laws when asked, including
+		where they are projected.
+	\item If needed, part of the code can be inserted as a discussion reference.
+\end{itemize}
+
+Use the following template when you need to discuss the hierarchy of tasks of a
+given action or set of actions:
+\begin{table}[htb]
+	\caption{
+		Example of actions/hierarchy table: a number in a given cell
+		represents the priority of the control task (row) in the
+		hierarchy of the control action (column). The type column
+		indicates whether the objective is an equality (E) or inequality
+		(I) one.
+	}
+	\label{table:actions_table}
+	\begin{center}
+		\footnotesize
+		\begin{tabular}{ccccc}
+			\toprule
+			Task & Type & $\mathcal{A}_{1}$ & $\mathcal{A}_{2}$ &
+			$\mathcal{A}_{3}$\\
+			\midrule
+			Task A & I & 1 & & 1   \\
+			\hdashline
+			Task B & I & 2 & 1 &   \\
+			\hdashline
+			Task C & E &   & 2 & 2 \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+\end{table}%
